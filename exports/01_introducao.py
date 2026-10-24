@@ -45,20 +45,48 @@ print("Resultado:", resultado)
 # 
 # Em **Binder**, as dependências vêm de `requirements.txt`. Em **Colab**, podemos instalar pacotes caso não estejam disponíveis.
 
+# In[ ]:
+
+
+from pathlib import Path
+import subprocess
+import shutil
+import importlib.util
+
+if importlib.util.find_spec("pvlib") is None:
+    get_ipython().run_line_magic('pip', 'install -q pvlib ipywidgets')
+
+REPO_URL = "https://github.com/PV-Tutorials/2026_pvlib-and-performance_CBENS.git"
+
+# No Colab, os arquivos do repositório não são baixados automaticamente.
+if Path("/content").exists():
+    repo_dir = Path("/content/2026_pvlib-and-performance_CBENS")
+
+    if not repo_dir.exists():
+        subprocess.run(
+            ["git", "clone", "--depth", "1", REPO_URL, str(repo_dir)],
+            check=True
+        )
+
+    # Disponibilizar as pastas no diretório de trabalho do notebook
+    for folder in ["weather_data", "field_data", "results"]:
+        source = repo_dir / folder
+        destination = Path.cwd() / folder
+
+        if source.exists() and not destination.exists():
+            shutil.copytree(source, destination)
+
+# Verificar os arquivos disponíveis
+for folder in ["weather_data", "field_data", "results"]:
+    path = Path(folder)
+    files = list(path.glob("*.csv")) if path.exists() else []
+    print(f"{folder}: {len(files)} arquivos CSV")
+
+
 # In[5]:
 
 
-import importlib.util
-import subprocess
-import sys
-
-if importlib.util.find_spec("pvlib") is None:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "pvlib>=0.13"])
-
-import pandas as pd
-import matplotlib.pyplot as plt
 import pvlib
-from pathlib import Path
 
 print("pvlib:", pvlib.__version__)
 

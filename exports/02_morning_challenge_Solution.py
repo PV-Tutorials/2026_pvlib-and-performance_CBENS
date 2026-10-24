@@ -54,8 +54,39 @@
 # In[ ]:
 
 
-# No Colab, descomente caso necessário:
-# %pip install pvlib
+from pathlib import Path
+import subprocess
+import shutil
+import importlib.util
+
+if importlib.util.find_spec("pvlib") is None:
+    get_ipython().run_line_magic('pip', 'install -q pvlib ipywidgets')
+
+REPO_URL = "https://github.com/PV-Tutorials/2026_pvlib-and-performance_CBENS.git"
+
+# No Colab, os arquivos do repositório não são baixados automaticamente.
+if Path("/content").exists():
+    repo_dir = Path("/content/2026_pvlib-and-performance_CBENS")
+
+    if not repo_dir.exists():
+        subprocess.run(
+            ["git", "clone", "--depth", "1", REPO_URL, str(repo_dir)],
+            check=True
+        )
+
+    # Disponibilizar as pastas no diretório de trabalho do notebook
+    for folder in ["weather_data", "field_data", "results"]:
+        source = repo_dir / folder
+        destination = Path.cwd() / folder
+
+        if source.exists() and not destination.exists():
+            shutil.copytree(source, destination)
+
+# Verificar os arquivos disponíveis
+for folder in ["weather_data", "field_data", "results"]:
+    path = Path(folder)
+    files = list(path.glob("*.csv")) if path.exists() else []
+    print(f"{folder}: {len(files)} arquivos CSV")
 
 
 # In[1]:
@@ -82,7 +113,9 @@ print("pvlib:", pvlib.__version__)
 
 
 # TODO: substituir pelo nome do arquivo NSRDB fornecido
-weather_file = r"weather_data\nsrdb_33.6762_-83.67633_nsrdb-GOES-aggregated-v4-0-0_60_2016.csv"
+from pathlib import Path
+
+weather_file = Path("weather_data") / "nsrdb_33.6762_-83.67633_nsrdb-GOES-aggregated-v4-0-0_60_2016.csv"
 
 weather, weather_meta = pvlib.iotools.read_nsrdb_psm4(
     weather_file, map_variables=True
@@ -253,25 +286,25 @@ plt.show()
 # In[ ]:
 
 
-# TODO: preencher a relação DC/AC e a eficiência nominal do inversor
-DC_AC_ratio = ...
-eta_inv_nom = ...      # fração, não %
+# Relação DC/AC e eficiência nominal do inversor
+DC_AC_ratio = 1.17
+eta_inv_nom = 0.96      # fração, não %
 losses_percent = 9.87
 
-# TODO: potência AC nominal da usina (W)
-pac0 = ...
+# Potência AC nominal da usina (W)
+pac0 = pdc0 / DC_AC_ratio
 
-# TODO: potência DC de entrada nominal para o modelo do inversor (W)
-inverter_pdc0 = ...
+# Potência DC de entrada nominal para o modelo do inversor (W)
+inverter_pdc0 = pac0 / eta_inv_nom
 
-# TODO: aplicar as perdas agregadas ANTES do inversor
-pdc_after_losses = ...
+# Aplicar as perdas agregadas ANTES do inversor
+pdc_after_losses = pdc * (1 - losses_percent / 100)
 
-# TODO: calcular a potência AC com pvlib.inverter.pvwatts
+# Calcular a potência AC
 pac = pvlib.inverter.pvwatts(
-    pdc=...,
-    pdc0=...,
-    eta_inv_nom=...
+    pdc=pdc_after_losses,
+    pdc0=inverter_pdc0,
+    eta_inv_nom=eta_inv_nom
 )
 
 pac = pd.Series(pac, index=weather.index, name="ac_power_w")
