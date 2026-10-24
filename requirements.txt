@@ -1,0 +1,8 @@
+pvlib
+numpy
+pandas
+matplotlib
+scipy
+ipywidgets
+plotly
+requests
