@@ -42,7 +42,7 @@ print("pvlib:", pvlib.__version__)
 # 
 # **Importante:** isso pressupõe que os offsets salvos no arquivo de campo estejam corretos. A origem dos timestamps do PVDAQ deve ser conferida antes de tirar conclusões sobre defasagens entre curvas.
 
-# In[35]:
+# In[14]:
 
 
 field_file = Path("field_data/9069_subset_hourly.csv")
@@ -69,7 +69,7 @@ display(field.head())
 # 
 # Observe que existem **dois medidores AC** e numerosos canais de inversores. Não devemos somar ou substituir esses canais sem entender o esquema elétrico e os períodos em que cada um opera. Aqui começamos inspecionando os dois medidores.
 
-# In[36]:
+# In[15]:
 
 
 meter_cols = [c for c in ["meter_1_ac_power_kw", "meter_2_ac_power_kw"] if c in field.columns]
@@ -87,7 +87,7 @@ display(coverage.to_frame("Valores presentes (%)"))
 # 
 # O menu muda apenas o **intervalo apresentado**; o gráfico continua com pontos de **resolução horária**. Examine a forma das curvas diárias, quedas de potência, períodos ausentes e diferenças entre os medidores.
 
-# In[37]:
+# In[16]:
 
 
 weeks = pd.date_range(
@@ -116,7 +116,7 @@ widgets.interact(
 );
 
 
-# In[38]:
+# In[17]:
 
 
 # ------------------------------------------
@@ -160,28 +160,7 @@ ax.grid(alpha=0.3)
 plt.show()
 
 
-# In[39]:
-
-
-# Comparar os dois medidores (períodos diferentes)
-meters = ["meter_1_ac_power_kw", "meter_2_ac_power_kw"]
-
-summary = field[meters].describe(percentiles=[.50, .95, .99]).T
-summary["first_date"] = [field[c].first_valid_index() for c in meters]
-summary["last_date"] = [field[c].last_valid_index() for c in meters]
-
-display(summary[["count", "50%", "95%", "99%", "max", "first_date", "last_date"]])
-
-# Distribuição de potência durante operação
-ax = field[meters].clip(lower=0).plot.hist(
-    bins=70, alpha=0.5, figsize=(11, 4), density=True
-)
-ax.set(xlabel="Potência AC (kW)", ylabel="Densidade",
-       title="Distribuição de potência — M1 vs M2")
-plt.show()
-
-
-# In[40]:
+# In[18]:
 
 
 # Soma da potência dos 40 inversores
@@ -217,7 +196,7 @@ plt.show()
 # 
 # Vamos examinar, para uma semana, um canal de irradiância POA junto à potência do medidor. Os eixos têm unidades diferentes: **compare a forma**, não diretamente a altura das curvas. É normal a potência depender também da temperatura, das perdas e da disponibilidade dos equipamentos.
 
-# In[41]:
+# In[19]:
 
 
 # Combinar M1 e M2 (sem somar)
@@ -254,7 +233,7 @@ widgets.interact(
 # 
 # O percentual abaixo mostra a **fração de horas com valor registrado**, e não a disponibilidade física da usina. Um medidor pode ter dados ausentes por problemas de comunicação, e o valor zero pode ser uma observação legítima. Mais tarde, no QA/QC, distinguiremos essas situações.
 
-# In[42]:
+# In[20]:
 
 
 monthly_coverage = field[meter_cols].notna().resample("MS").mean() * 100
@@ -270,6 +249,15 @@ ax.grid(alpha=.3); plt.show()
 # - Qual medidor parece ter dados adequados para comparação com um **modelo da usina inteira**? Como você confirmaria o significado desse canal?
 # - Por que não devemos preencher automaticamente todas as lacunas com zero?
 
+# In[21]:
+
+
+# Combinar M1 e M2 em um único canal de potência AC
+field["meter_ac_power_kw"] = field["meter_1_ac_power_kw"].combine_first(
+    field["meter_2_ac_power_kw"]
+)
+
+
 # ## Parte B — Simular 2016–2023 e comparar uma semana
 # 
 # Nesta parte executamos **o mesmo fluxo físico** do Tutorial 2, agora em todos os anos do arquivo NSRDB combinado:
@@ -282,7 +270,7 @@ ax.grid(alpha=.3); plt.show()
 # 
 # Este CSV foi salvo previamente com `pandas`, por isso usamos `pd.read_csv()` — não o leitor de arquivos PSM4 originais. Verifique especialmente os horários `HH:30`, o fuso e as colunas exigidas.
 
-# In[43]:
+# In[22]:
 
 
 weather_file = Path("weather_data/Simon_Solar_NSRDB_2016_2023.csv")
@@ -311,7 +299,7 @@ display(weather[needed].head())
 # 
 # A equação DC usada é a de `pvlib.pvsystem.pvwatts_dc` (não uma simulação elétrica de cada string).
 
-# In[44]:
+# In[23]:
 
 
 # Parâmetros da usina — mesmo caso-base do Tutorial 2
@@ -376,7 +364,7 @@ print("Horas modeladas com valor AC:", modeled["ac_power_kw"].notna().sum())
 # 
 # Começamos pelo `meter_2_ac_power_kw`, usado no estudo anterior. Isso **não garante** que o medidor representa toda a usina em todos os períodos; os dados e o diagrama elétrico precisam ser confirmados. Também é necessário verificar a convenção original dos timestamps do PVDAQ antes de interpretar defasagens como erro do modelo.
 
-# In[45]:
+# In[24]:
 
 
 comparison_meter = "meter_2_ac_power_kw"
@@ -452,8 +440,27 @@ widgets.interact(
 # 
 # **Pergunta final:** quando uma curva modelada se afasta da medida, estamos diante de um problema do modelo, dos dados meteorológicos, do sensor, do horário ou da própria operação da usina?
 
-# In[ ]:
+# In[25]:
 
 
+from pathlib import Path
 
+
+# Salvar resultados para o Tutorial 4
+output_dir = Path("results")
+output_dir.mkdir(exist_ok=True)
+
+modeled.to_csv(
+    output_dir / "Simon_Solar_modeled_2016_2023.csv",
+    index_label="timestamp"
+)
+
+field.to_csv(
+    output_dir / "Simon_Solar_field_aligned_2016_2023.csv",
+    index_label="timestamp"
+)
+
+print("Arquivos salvos:")
+print(output_dir / "Simon_Solar_modeled_2016_2023.csv")
+print(output_dir / "Simon_Solar_field_aligned_2016_2023.csv")
 
