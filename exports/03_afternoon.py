@@ -42,7 +42,7 @@ print("pvlib:", pvlib.__version__)
 # 
 # **Importante:** isso pressupõe que os offsets salvos no arquivo de campo estejam corretos. A origem dos timestamps do PVDAQ deve ser conferida antes de tirar conclusões sobre defasagens entre curvas.
 
-# In[3]:
+# In[35]:
 
 
 field_file = Path("field_data/9069_subset_hourly.csv")
@@ -55,6 +55,9 @@ field.index = field.index.tz_convert("Etc/GMT+5")
 field.index.name = "timestamp"
 field = field.apply(pd.to_numeric, errors="coerce")
 
+#field.index = field.index + pd.Timedelta(hours=4)
+
+
 print("Período:", field.index.min(), "até", field.index.max())
 print("Linhas:", len(field), "| Variáveis:", len(field.columns))
 print("Intervalo típico:", field.index.to_series().diff().median())
@@ -66,7 +69,7 @@ display(field.head())
 # 
 # Observe que existem **dois medidores AC** e numerosos canais de inversores. Não devemos somar ou substituir esses canais sem entender o esquema elétrico e os períodos em que cada um opera. Aqui começamos inspecionando os dois medidores.
 
-# In[4]:
+# In[36]:
 
 
 meter_cols = [c for c in ["meter_1_ac_power_kw", "meter_2_ac_power_kw"] if c in field.columns]
@@ -84,7 +87,7 @@ display(coverage.to_frame("Valores presentes (%)"))
 # 
 # O menu muda apenas o **intervalo apresentado**; o gráfico continua com pontos de **resolução horária**. Examine a forma das curvas diárias, quedas de potência, períodos ausentes e diferenças entre os medidores.
 
-# In[5]:
+# In[37]:
 
 
 weeks = pd.date_range(
@@ -113,7 +116,7 @@ widgets.interact(
 );
 
 
-# In[7]:
+# In[38]:
 
 
 # ------------------------------------------
@@ -157,7 +160,7 @@ ax.grid(alpha=0.3)
 plt.show()
 
 
-# In[11]:
+# In[39]:
 
 
 # Comparar os dois medidores (períodos diferentes)
@@ -178,7 +181,7 @@ ax.set(xlabel="Potência AC (kW)", ylabel="Densidade",
 plt.show()
 
 
-# In[12]:
+# In[40]:
 
 
 # Soma da potência dos 40 inversores
@@ -214,7 +217,7 @@ plt.show()
 # 
 # Vamos examinar, para uma semana, um canal de irradiância POA junto à potência do medidor. Os eixos têm unidades diferentes: **compare a forma**, não diretamente a altura das curvas. É normal a potência depender também da temperatura, das perdas e da disponibilidade dos equipamentos.
 
-# In[13]:
+# In[41]:
 
 
 # Combinar M1 e M2 (sem somar)
@@ -251,7 +254,7 @@ widgets.interact(
 # 
 # O percentual abaixo mostra a **fração de horas com valor registrado**, e não a disponibilidade física da usina. Um medidor pode ter dados ausentes por problemas de comunicação, e o valor zero pode ser uma observação legítima. Mais tarde, no QA/QC, distinguiremos essas situações.
 
-# In[14]:
+# In[42]:
 
 
 monthly_coverage = field[meter_cols].notna().resample("MS").mean() * 100
@@ -279,7 +282,7 @@ ax.grid(alpha=.3); plt.show()
 # 
 # Este CSV foi salvo previamente com `pandas`, por isso usamos `pd.read_csv()` — não o leitor de arquivos PSM4 originais. Verifique especialmente os horários `HH:30`, o fuso e as colunas exigidas.
 
-# In[15]:
+# In[43]:
 
 
 weather_file = Path("weather_data/Simon_Solar_NSRDB_2016_2023.csv")
@@ -308,7 +311,7 @@ display(weather[needed].head())
 # 
 # A equação DC usada é a de `pvlib.pvsystem.pvwatts_dc` (não uma simulação elétrica de cada string).
 
-# In[17]:
+# In[44]:
 
 
 # Parâmetros da usina — mesmo caso-base do Tutorial 2
@@ -373,7 +376,7 @@ print("Horas modeladas com valor AC:", modeled["ac_power_kw"].notna().sum())
 # 
 # Começamos pelo `meter_2_ac_power_kw`, usado no estudo anterior. Isso **não garante** que o medidor representa toda a usina em todos os períodos; os dados e o diagrama elétrico precisam ser confirmados. Também é necessário verificar a convenção original dos timestamps do PVDAQ antes de interpretar defasagens como erro do modelo.
 
-# In[18]:
+# In[45]:
 
 
 comparison_meter = "meter_2_ac_power_kw"
@@ -413,6 +416,30 @@ widgets.interact(
     week=widgets.Dropdown(options=compare_options, description="Semana:")
 );
 
+
+# 
+# ## Investigação: por que as curvas não coincidem?
+# 
+# Observe os horários dos picos de potência medida e modelada. As curvas apresentam um deslocamento sistemático, mesmo quando seus perfis são semelhantes.
+# 
+# **Será que o problema está no modelo ou na interpretação dos timestamps?**
+# 
+# Os dados meteorológicos NSRDB utilizam UTC−5, com registros no centro de cada hora (HH:30). Entretanto, os timestamps do arquivo PVDAQ podem ter recebido uma identificação incorreta de fuso horário durante a preparação dos dados.
+# 
+# ### Vamos investigar!
+# 
+# 1. Compare os horários de geração nas duas curvas. Qual parece ser o deslocamento?
+# 2. Volte à célula inicial de carregamento dos dados de campo (`field`).
+# 3. Experimente adicionar, **após a conversão para UTC−5**, a seguinte linha:
+# 
+#    `field.index = field.index + pd.Timedelta(hours=4)`
+# 
+# 4. Execute novamente as células seguintes e observe o gráfico de comparação.
+# 
+# **Discussão:** A concordância melhorou? Isso significa que identificamos a causa do problema?
+# 
+# **Importante:** O deslocamento de 4 horas é uma correção *experimental*, identificada pela comparação dos dados, e não uma confirmação de que o relógio original estava errado. Em uma análise real, devemos verificar os timestamps na fonte antes de adotar a correção definitivamente.
+# 
 
 # ## Encerramento — Preparação para a próxima atividade
 # 

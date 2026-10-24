@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# ![Tutorial_banner](static/cbens_2026_performancetutorial_logo.jpg)
+# ![Tutorial_banner](images/cbens_2026_performancetutorial_logo.jpg)
 # 
 # 
 # # PARTE 2 — Modelagem de um sistema fotovoltaico real com pvlib
