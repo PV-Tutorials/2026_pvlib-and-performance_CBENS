@@ -87,7 +87,8 @@ for folder in ["weather_data", "field_data", "results"]:
 
 
 import pvlib
-
+import pandas as pd
+import matplotlib.pyplot as plt
 print("pvlib:", pvlib.__version__)
 
 

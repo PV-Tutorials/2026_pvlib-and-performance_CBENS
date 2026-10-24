@@ -213,6 +213,8 @@ field["inverter_total_kw"] = field[inv_cols].sum(
 )
 
 # Comparar cada medidor com a soma dos inversores
+meters = ["meter_1_ac_power_kw", "meter_2_ac_power_kw"]
+
 fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
 for ax, meter in zip(axes, meters):
