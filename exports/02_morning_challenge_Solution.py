@@ -51,7 +51,7 @@
 # 
 # No Colab, execute a primeira célula para instalar `pvlib`. Em Jupyter local, se a biblioteca já estiver instalada, você pode pular a instalação.
 
-# In[ ]:
+# In[1]:
 
 
 from pathlib import Path
@@ -89,7 +89,7 @@ for folder in ["weather_data", "field_data", "results"]:
     print(f"{folder}: {len(files)} arquivos CSV")
 
 
-# In[1]:
+# In[2]:
 
 
 import pvlib

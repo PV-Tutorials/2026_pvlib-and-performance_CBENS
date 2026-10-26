@@ -23,11 +23,21 @@
 # ### Possíveis investigações
 # 
 # 1. **QA/QC:** identificar valores anômalos, dados ausentes e problemas de qualidade das medições.
-# 2. **Métricas de desempenho:** calcular MBE, MAE, RMSE e erros normalizados.
+# 2. **Métricas de desempenho:** calcular MBE, MAE, RMSE e erros normalizados, bias
 # 3. **Análise de discrepâncias:** investigar diferenças por ano, estação, irradiância ou temperatura.
 # 4. **Melhorias do modelo:** explorar perdas, disponibilidade, degradação e outras hipóteses.
 # 5. **Sensibilidade e incertezas:** avaliar como mudanças nos parâmetros afetam os resultados.
-# 6. Outras?
+# 6. Effect of time shifts?
+# 7. Investigate disponibilidade de dados
+# 8. Detectar quales dias tao clear sky
+# 9. Facer estudo de degradacao? 
+# 10. Outras?
+# 
+# ## No Rotafólio:
+# 
+# 1. Escreba sua pergunta,
+# 2. Pasos pra achar a resposta
+# 3. Grafo final
 # 
 # ### Entrega do desafio
 # 

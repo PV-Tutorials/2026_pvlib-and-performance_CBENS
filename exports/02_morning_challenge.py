@@ -43,7 +43,7 @@
 # **Perguntas para começar:** Qual é a capacidade AC aproximada? Por que um modelo agregado pode estimar potência sem o número de módulos em cada string? O que se perde ao não calcular a curva I–V?
 # 
 # 
-# ![Satellite image of Simon Solar](field_data/9069_sat_image.png)
+# ![Satellite image of Simon Solar](images/9069_sat_image.png)
 # 
 # 
 
